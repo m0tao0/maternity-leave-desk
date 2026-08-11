@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { CITY_POLICIES } from "../app/data/policies";
+import { getSegmentLegalCitations } from "../app/data/legalExcerpts";
 import { calculateMaternityLeave } from "../app/lib/maternity";
 
 function calculate(
@@ -101,4 +102,41 @@ test("an unconfirmed lawful birth only receives the national base", () => {
   const result = calculate("上海", { lawfulBirthConfirmed: false });
   assert.equal(result.statutoryLabel, "98天");
   assert.equal(result.endDate, "2026-04-08");
+});
+
+test("every possible calculation segment has a concise official excerpt and link", () => {
+  for (const policy of CITY_POLICIES) {
+    const commonInput = {
+      policy,
+      startDate: policy.birthDateAnchored ? "2025-12-20" : "2026-01-01",
+      birthDate: "2026-01-01",
+      childCount: 2,
+      parity: 3 as const,
+      lawfulBirthConfirmed: true,
+      selectedLocalDays:
+        policy.localLeave.kind === "total_range"
+          ? policy.localLeave.minTotalDays
+          : undefined,
+      prePregnancyExam: true,
+      optionalLeaveApproved: true,
+      pureBreastfeedingProof: true,
+      employerApprovedExtraMonths: 1,
+      medicalProof: true,
+    };
+
+    for (const deliveryType of ["dystocia", "cesarean"] as const) {
+      const result = calculateMaternityLeave({ ...commonInput, deliveryType });
+      for (const segment of result.segments) {
+        const citations = getSegmentLegalCitations(policy, segment, deliveryType);
+        assert.ok(
+          citations.length > 0,
+          `${policy.city}/${deliveryType}/${segment.id} 缺少法规原文`,
+        );
+        for (const citation of citations) {
+          assert.ok(citation.excerpt.quote.length > 0);
+          assert.match(citation.source.url, /^https:\/\//);
+        }
+      }
+    }
+  }
 });
