@@ -303,14 +303,23 @@ select {
   box-shadow: 0 0 0 3px rgba(12, 118, 88, 0.1);
 }
 
-.date-confirm-row {
+.date-fields-block {
+  min-width: 0;
+}
+
+.date-fields-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px;
+  align-items: end;
+  gap: 10px;
+}
+
+.date-subfield {
+  min-width: 0;
 }
 
 .date-confirm-button {
-  min-width: 72px;
+  width: 72px;
   height: 43px;
   padding: 0 12px;
   border: 1px solid var(--green);
@@ -341,6 +350,8 @@ select {
 }
 
 .date-confirm-hint {
+  display: block;
+  margin-top: 7px;
   color: var(--muted);
   font-size: 10px;
   line-height: 1.45;
@@ -378,7 +389,10 @@ select {
 
 .segmented-control input {
   position: absolute;
+  width: 1px;
+  height: 1px;
   opacity: 0;
+  clip-path: inset(50%);
   pointer-events: none;
 }
 
@@ -546,11 +560,7 @@ select {
 }
 
 .primary-date > span {
-  color: rgba(255, 255, 255, 0.74);
-}
-
-.primary-date small {
-  color: white;
+  color: #fff;
 }
 
 .date-card strong {
@@ -568,6 +578,10 @@ select {
   color: var(--muted);
   font-size: 10px;
   line-height: 1.5;
+}
+
+.date-card.primary-date small {
+  color: #fff;
 }
 
 .date-arrow {
@@ -759,6 +773,96 @@ select {
   color: var(--muted);
   font-size: 9px;
   line-height: 1.5;
+}
+
+.segment-law-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.segment-law-heading {
+  color: #52605a;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.segment-law {
+  overflow: hidden;
+  border: 1px solid #dce5e0;
+  border-radius: 10px;
+  background: #fbfcfb;
+}
+
+.segment-law-quote {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 9px;
+  padding: 10px 11px;
+}
+
+.segment-law-quote > span {
+  margin-top: 1px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  font-size: 8px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.segment-law-quote q {
+  color: #34413c;
+  font-family: Georgia, "Songti SC", "SimSun", serif;
+  font-size: 10px;
+  line-height: 1.65;
+  quotes: "“" "”";
+}
+
+.segment-law a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border-top: 1px solid #e5ebe7;
+  background: white;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.segment-law a:hover {
+  background: #f4faf7;
+}
+
+.segment-law a > span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.segment-law a strong {
+  overflow: hidden;
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.segment-law a small {
+  overflow: hidden;
+  margin: 0;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.segment-law a > b {
+  flex: 0 0 auto;
+  color: var(--green);
+  font-size: 8px;
 }
 
 .source-list {

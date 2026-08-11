@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getSegmentLegalCitations } from "./data/legalExcerpts";
 import { CITY_POLICIES } from "./data/policies";
 import {
   calculateMaternityLeave,
@@ -159,32 +160,35 @@ export function MaternityCalculator() {
               </span>
             </label>
 
-            <label className="field">
-              <span>产假开始日 *</span>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-              />
-            </label>
+            <div className="date-fields-block field-wide">
+              <div className="date-fields-row">
+                <label className="field date-subfield">
+                  <span>产假开始日 *</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                  />
+                </label>
 
-            <div className="field">
-              <label htmlFor="birth-date">分娩 / 预计分娩日 *</label>
-              <div className="date-confirm-row">
-                <input
-                  id="birth-date"
-                  type="date"
-                  value={birthDateInput}
-                  onChange={(event) => setBirthDateInput(event.target.value)}
-                />
+                <label className="field date-subfield" htmlFor="birth-date">
+                  <span>分娩 / 预计分娩日 *</span>
+                  <input
+                    id="birth-date"
+                    type="date"
+                    value={birthDateInput}
+                    onChange={(event) => setBirthDateInput(event.target.value)}
+                  />
+                </label>
+
                 <button
                   type="button"
                   className="date-confirm-button"
                   aria-label="确认分娩日期并更新核算结果"
-                  disabled={!birthDateInput || birthDateInput === birthDate}
+                  disabled={!birthDateInput}
                   onClick={() => setBirthDate(birthDateInput)}
                 >
-                  {birthDateInput === birthDate ? "已确认" : "确认日期"}
+                  确认
                 </button>
               </div>
               <small
@@ -486,25 +490,54 @@ export function MaternityCalculator() {
           <section className="breakdown-section">
             <div className="section-title">
               <h3>逐段计算</h3>
-              <span>起始日计为第 1 天</span>
+              <span>工具计日说明：每段起始日计为第 1 天</span>
             </div>
             <ol className="timeline">
-              {result.segments.map((segment, index) => (
-                <li key={segment.id}>
-                  <span className="timeline-index">{String(index + 1).padStart(2, "0")}</span>
-                  <div className="timeline-body">
-                    <div className="timeline-row">
-                      <strong>{segment.label}</strong>
-                      <b>{formatDuration(segment.value, segment.unit)}</b>
+              {result.segments.map((segment, index) => {
+                const citations = getSegmentLegalCitations(
+                  policy,
+                  segment,
+                  deliveryType,
+                );
+
+                return (
+                  <li key={segment.id}>
+                    <span className="timeline-index">{String(index + 1).padStart(2, "0")}</span>
+                    <div className="timeline-body">
+                      <div className="timeline-row">
+                        <strong>{segment.label}</strong>
+                        <b>{formatDuration(segment.value, segment.unit)}</b>
+                      </div>
+                      <p>
+                        {formatChineseDate(segment.startDate)} — {formatChineseDate(segment.endDate)}
+                      </p>
+                      <small>{countModeLabel(segment.countMode)}</small>
+                      {segment.note && <small>{segment.note}</small>}
+
+                      {citations.length > 0 && (
+                        <div className="segment-law-list">
+                          <div className="segment-law-heading">精简法规原文</div>
+                          {citations.map(({ excerpt, source }, citationIndex) => (
+                            <article className="segment-law" key={`${source.id}-${citationIndex}`}>
+                              <div className="segment-law-quote">
+                                <span>{excerpt.label}</span>
+                                <q>{excerpt.quote}</q>
+                              </div>
+                              <a href={source.url} target="_blank" rel="noreferrer">
+                                <span>
+                                  <strong>{source.title}</strong>
+                                  <small>{source.issuer} · {source.article}</small>
+                                </span>
+                                <b>查看官方原文 ↗</b>
+                              </a>
+                            </article>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <p>
-                      {formatChineseDate(segment.startDate)} — {formatChineseDate(segment.endDate)}
-                    </p>
-                    <small>{countModeLabel(segment.countMode)}</small>
-                    {segment.note && <small>{segment.note}</small>}
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ol>
           </section>
 
