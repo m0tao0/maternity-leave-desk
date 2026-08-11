@@ -31,6 +31,8 @@ test("renders the maternity leave calculator", async () => {
   assert.match(html, /<title>产假政策核算台｜20城首版<\/title>/i);
   assert.match(html, /把政策条文，算成一个明确日期。/);
   assert.match(html, /填写核算条件/);
+  assert.match(html, /确认分娩日期并更新核算结果/);
+  assert.match(html, /当前按 2026年8月11日周二 核算/);
   assert.match(html, /核算结果/);
   assert.match(html, /政策依据/);
   assert.match(html, /首批 20 城/);

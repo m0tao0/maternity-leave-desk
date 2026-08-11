@@ -18,6 +18,7 @@ function formatDuration(value: number, unit: "days" | "months") {
 export function MaternityCalculator() {
   const [city, setCity] = useState("上海");
   const [startDate, setStartDate] = useState(TODAY);
+  const [birthDateInput, setBirthDateInput] = useState(TODAY);
   const [birthDate, setBirthDate] = useState(TODAY);
   const [deliveryType, setDeliveryType] =
     useState<DeliveryType>("standard");
@@ -167,14 +168,34 @@ export function MaternityCalculator() {
               />
             </label>
 
-            <label className="field">
-              <span>分娩 / 预计分娩日 *</span>
-              <input
-                type="date"
-                value={birthDate}
-                onChange={(event) => setBirthDate(event.target.value)}
-              />
-            </label>
+            <div className="field">
+              <label htmlFor="birth-date">分娩 / 预计分娩日 *</label>
+              <div className="date-confirm-row">
+                <input
+                  id="birth-date"
+                  type="date"
+                  value={birthDateInput}
+                  onChange={(event) => setBirthDateInput(event.target.value)}
+                />
+                <button
+                  type="button"
+                  className="date-confirm-button"
+                  aria-label="确认分娩日期并更新核算结果"
+                  disabled={!birthDateInput || birthDateInput === birthDate}
+                  onClick={() => setBirthDate(birthDateInput)}
+                >
+                  {birthDateInput === birthDate ? "已确认" : "确认日期"}
+                </button>
+              </div>
+              <small
+                className={`date-confirm-hint ${birthDateInput !== birthDate ? "pending" : ""}`}
+                aria-live="polite"
+              >
+                {birthDateInput !== birthDate
+                  ? "日期已修改，确认后更新核算结果"
+                  : `当前按 ${formatChineseDate(birthDate)} 核算`}
+              </small>
+            </div>
 
             <fieldset className="field field-wide segmented-field">
               <legend>分娩情况</legend>
