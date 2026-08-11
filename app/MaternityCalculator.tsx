@@ -12,6 +12,46 @@ import {
 
 const TODAY = "2026-08-11";
 
+type FormValues = {
+  city: string;
+  startDate: string;
+  birthDate: string;
+  deliveryType: DeliveryType;
+  childCount: number;
+  parity: 1 | 2 | 3;
+  selectedLocalDays: number;
+  prePregnancyExam: boolean;
+  lawfulBirthConfirmed: boolean;
+  medicalProof: boolean;
+  optionalLeaveApproved: boolean;
+  pureBreastfeedingProof: boolean;
+  employerApprovedExtraMonths: number;
+  requestedDays: number;
+};
+
+const INITIAL_FORM_VALUES: FormValues = {
+  city: "上海",
+  startDate: TODAY,
+  birthDate: TODAY,
+  deliveryType: "standard",
+  childCount: 1,
+  parity: 1,
+  selectedLocalDays: 60,
+  prePregnancyExam: false,
+  lawfulBirthConfirmed: true,
+  medicalProof: false,
+  optionalLeaveApproved: false,
+  pureBreastfeedingProof: false,
+  employerApprovedExtraMonths: 0,
+  requestedDays: 200,
+};
+
+function formValuesMatch(left: FormValues, right: FormValues) {
+  return (Object.keys(left) as Array<keyof FormValues>).every(
+    (key) => left[key] === right[key],
+  );
+}
+
 function formatDuration(value: number, unit: "days" | "months") {
   return unit === "months" ? `${value}个月` : `${value}天`;
 }
@@ -20,7 +60,6 @@ export function MaternityCalculator() {
   const [city, setCity] = useState("上海");
   const [startDate, setStartDate] = useState(TODAY);
   const [birthDateInput, setBirthDateInput] = useState(TODAY);
-  const [birthDate, setBirthDate] = useState(TODAY);
   const [deliveryType, setDeliveryType] =
     useState<DeliveryType>("standard");
   const [childCount, setChildCount] = useState(1);
@@ -34,46 +73,54 @@ export function MaternityCalculator() {
   const [employerApprovedExtraMonths, setEmployerApprovedExtraMonths] =
     useState(0);
   const [requestedDays, setRequestedDays] = useState(200);
+  const [confirmedInput, setConfirmedInput] =
+    useState<FormValues>(INITIAL_FORM_VALUES);
 
   const policy = CITY_POLICIES.find((item) => item.city === city)!;
+  const confirmedPolicy = CITY_POLICIES.find(
+    (item) => item.city === confirmedInput.city,
+  )!;
+  const draftInput: FormValues = {
+    city,
+    startDate,
+    birthDate: birthDateInput,
+    deliveryType,
+    childCount,
+    parity,
+    selectedLocalDays,
+    prePregnancyExam,
+    lawfulBirthConfirmed,
+    medicalProof,
+    optionalLeaveApproved,
+    pureBreastfeedingProof,
+    employerApprovedExtraMonths,
+    requestedDays,
+  };
+  const hasPendingChanges = !formValuesMatch(draftInput, confirmedInput);
 
   const result = useMemo(
     () =>
       calculateMaternityLeave({
-        policy,
-        startDate,
-        birthDate,
-        deliveryType,
-        childCount,
-        parity,
-        selectedLocalDays,
-        prePregnancyExam,
-        requestedDays: requestedDays || undefined,
-        lawfulBirthConfirmed,
-        medicalProof,
-        optionalLeaveApproved,
-        pureBreastfeedingProof,
-        employerApprovedExtraMonths,
+        policy: confirmedPolicy,
+        startDate: confirmedInput.startDate,
+        birthDate: confirmedInput.birthDate,
+        deliveryType: confirmedInput.deliveryType,
+        childCount: confirmedInput.childCount,
+        parity: confirmedInput.parity,
+        selectedLocalDays: confirmedInput.selectedLocalDays,
+        prePregnancyExam: confirmedInput.prePregnancyExam,
+        requestedDays: confirmedInput.requestedDays || undefined,
+        lawfulBirthConfirmed: confirmedInput.lawfulBirthConfirmed,
+        medicalProof: confirmedInput.medicalProof,
+        optionalLeaveApproved: confirmedInput.optionalLeaveApproved,
+        pureBreastfeedingProof: confirmedInput.pureBreastfeedingProof,
+        employerApprovedExtraMonths: confirmedInput.employerApprovedExtraMonths,
       }),
-    [
-      policy,
-      startDate,
-      birthDate,
-      deliveryType,
-      childCount,
-      parity,
-      selectedLocalDays,
-      prePregnancyExam,
-      requestedDays,
-      lawfulBirthConfirmed,
-      medicalProof,
-      optionalLeaveApproved,
-      pureBreastfeedingProof,
-      employerApprovedExtraMonths,
-    ],
+    [confirmedInput, confirmedPolicy],
   );
 
-  const historicalMismatch = birthDate < policy.effectiveFrom;
+  const historicalMismatch =
+    confirmedInput.birthDate < confirmedPolicy.effectiveFrom;
   const requiresManualReview = result.requiresManualReview || historicalMismatch;
   const decision = result.requestedDecision;
 
@@ -88,6 +135,11 @@ export function MaternityCalculator() {
     setOptionalLeaveApproved(false);
     setPureBreastfeedingProof(false);
     setEmployerApprovedExtraMonths(0);
+  }
+
+  function confirmCalculation() {
+    if (!startDate || !birthDateInput) return;
+    setConfirmedInput(draftInput);
   }
 
   return (
@@ -131,7 +183,7 @@ export function MaternityCalculator() {
             <span className="step-number">01</span>
             <div>
               <h2>填写核算条件</h2>
-              <p>带 * 的项目用于确定政策和日期</p>
+              <p>填写完成后，在表单底部统一确认</p>
             </div>
           </div>
 
@@ -181,23 +233,9 @@ export function MaternityCalculator() {
                   />
                 </label>
 
-                <button
-                  type="button"
-                  className="date-confirm-button"
-                  aria-label="确认分娩日期并更新核算结果"
-                  disabled={!birthDateInput}
-                  onClick={() => setBirthDate(birthDateInput)}
-                >
-                  确认
-                </button>
               </div>
-              <small
-                className={`date-confirm-hint ${birthDateInput !== birthDate ? "pending" : ""}`}
-                aria-live="polite"
-              >
-                {birthDateInput !== birthDate
-                  ? "日期已修改，确认后更新核算结果"
-                  : `当前按 ${formatChineseDate(birthDate)} 核算`}
+              <small className="date-confirm-hint">
+                两个日期将在点击表单底部“确认”后参与核算
               </small>
             </div>
 
@@ -401,6 +439,25 @@ export function MaternityCalculator() {
               </strong>
             </div>
           </div>
+
+          <div className="form-confirm-action">
+            <button
+              type="button"
+              className="form-confirm-button"
+              disabled={!startDate || !birthDateInput}
+              onClick={confirmCalculation}
+            >
+              确认
+            </button>
+            <small
+              className={hasPendingChanges ? "pending" : ""}
+              aria-live="polite"
+            >
+              {hasPendingChanges
+                ? "有未确认的修改；确认后右侧结果将按全部条件统一更新"
+                : "当前条件已确认，右侧显示最新核算结果"}
+            </small>
+          </div>
         </aside>
 
         <section className="result-panel" aria-live="polite">
@@ -408,10 +465,16 @@ export function MaternityCalculator() {
             <span className="step-number">02</span>
             <div>
               <h2>核算结果</h2>
-              <p>{city} · {deliveryType === "standard" ? "顺产" : deliveryType === "cesarean" ? "剖宫产" : "难产"} · {childCount === 1 ? "单胎" : `${childCount}胞胎`}</p>
+              <p>{confirmedInput.city} · {confirmedInput.deliveryType === "standard" ? "顺产" : confirmedInput.deliveryType === "cesarean" ? "剖宫产" : "难产"} · {confirmedInput.childCount === 1 ? "单胎" : `${confirmedInput.childCount}胞胎`}</p>
             </div>
-            <span className={`result-status ${requiresManualReview ? "manual" : ""}`}>
-              {requiresManualReview ? "需人工复核" : "可自动核算"}
+            <span
+              className={`result-status ${hasPendingChanges ? "pending" : requiresManualReview ? "manual" : ""}`}
+            >
+              {hasPendingChanges
+                ? "等待确认更新"
+                : requiresManualReview
+                  ? "需人工复核"
+                  : "可自动核算"}
             </span>
           </div>
 
@@ -425,7 +488,7 @@ export function MaternityCalculator() {
             <div className="date-card primary-date">
               <span>法定休假最后一天</span>
               <strong>{formatChineseDate(result.endDate)}</strong>
-              <small>从 {formatChineseDate(startDate)} 起连续计算</small>
+              <small>从 {formatChineseDate(confirmedInput.startDate)} 起连续计算</small>
             </div>
             <div className="date-arrow" aria-hidden="true">→</div>
             <div className="date-card return-date">
@@ -446,7 +509,7 @@ export function MaternityCalculator() {
             </div>
             <div>
               <span>适用政策层级</span>
-              <strong>国家 + {policy.province}</strong>
+              <strong>国家 + {confirmedPolicy.province}</strong>
             </div>
           </div>
 
@@ -495,9 +558,9 @@ export function MaternityCalculator() {
             <ol className="timeline">
               {result.segments.map((segment, index) => {
                 const citations = getSegmentLegalCitations(
-                  policy,
+                  confirmedPolicy,
                   segment,
-                  deliveryType,
+                  confirmedInput.deliveryType,
                 );
 
                 return (
@@ -547,7 +610,7 @@ export function MaternityCalculator() {
               <span>点击打开官方原文</span>
             </div>
             <div className="source-list">
-              {policy.sources.map((source, index) => (
+              {confirmedPolicy.sources.map((source, index) => (
                 <a href={source.url} target="_blank" rel="noreferrer" key={source.id}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
                   <div>

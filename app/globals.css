@@ -259,6 +259,11 @@ select {
   color: var(--amber);
 }
 
+.result-status.pending {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -309,7 +314,7 @@ select {
 
 .date-fields-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: end;
   gap: 10px;
 }
@@ -318,48 +323,12 @@ select {
   min-width: 0;
 }
 
-.date-confirm-button {
-  width: 72px;
-  height: 43px;
-  padding: 0 12px;
-  border: 1px solid var(--green);
-  border-radius: 10px;
-  background: var(--green);
-  color: white;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 800;
-  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.date-confirm-button:hover:not(:disabled) {
-  background: var(--green-dark);
-  border-color: var(--green-dark);
-}
-
-.date-confirm-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(12, 118, 88, 0.16);
-}
-
-.date-confirm-button:disabled {
-  border-color: #d5ddd8;
-  background: #f1f4f2;
-  color: var(--muted);
-  cursor: default;
-}
-
 .date-confirm-hint {
   display: block;
   margin-top: 7px;
   color: var(--muted);
   font-size: 10px;
   line-height: 1.45;
-}
-
-.date-confirm-hint.pending {
-  color: #9a5d10;
-  font-weight: 700;
 }
 
 .segmented-field {
@@ -511,6 +480,56 @@ select {
 
 .policy-snapshot .review {
   color: var(--amber);
+}
+
+.form-confirm-action {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.form-confirm-button {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--green);
+  border-radius: 11px;
+  background: var(--green);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 8px 18px rgba(12, 118, 88, 0.17);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-confirm-button:hover:not(:disabled) {
+  border-color: var(--green-dark);
+  background: var(--green-dark);
+}
+
+.form-confirm-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(12, 118, 88, 0.16);
+}
+
+.form-confirm-button:disabled {
+  border-color: #d5ddd8;
+  background: #f1f4f2;
+  color: var(--muted);
+  cursor: default;
+  box-shadow: none;
+}
+
+.form-confirm-action small {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.form-confirm-action small.pending {
+  color: #8a570e;
+  font-weight: 700;
 }
 
 .alert {
