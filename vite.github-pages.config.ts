@@ -1,4 +1,5 @@
 import react from "@vitejs/plugin-react";
+import { cpSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
@@ -13,7 +14,19 @@ export default defineConfig({
   root: fileURLToPath(new URL("./github-pages", import.meta.url)),
   base,
   publicDir: fileURLToPath(new URL("./public", import.meta.url)),
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: "copy-gandengyan",
+      closeBundle() {
+        cpSync(
+          fileURLToPath(new URL("./gandengyan", import.meta.url)),
+          `${projectRoot}dist-pages/gandengyan`,
+          { recursive: true },
+        );
+      },
+    },
+  ],
   build: {
     outDir: `${projectRoot}dist-pages`,
     emptyOutDir: true,
