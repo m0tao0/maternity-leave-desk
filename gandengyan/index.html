@@ -1733,6 +1733,37 @@
       gap: 8px;
     }
 
+    .archive-item {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      gap: 8px;
+    }
+
+    .archive-item .archive-card {
+      flex: 1;
+      width: auto;
+      min-width: 0;
+    }
+
+    .archive-delete-btn {
+      display: grid;
+      flex: none;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--red);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .archive-delete-btn:active {
+      transform: scale(.96);
+    }
+
     .archive-card {
       display: block;
       width: 100%;
@@ -1916,6 +1947,7 @@
       flex: 1;
       min-width: 0;
       padding: 0 10px;
+      white-space: nowrap;
     }
 
     .dialog-tall {
@@ -2257,6 +2289,9 @@
       .row-multiplier-controls { gap: 5px; }
       .row-mult-btn { min-width: 40px; padding: 0 5px; }
       .row-multiplier-input { width: 28px; }
+      .dialog-foot { gap: 6px; }
+      .dialog-foot .btn { padding: 0 6px; gap: 0; font-size: 12px; }
+      .dialog-foot .btn svg { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -3488,21 +3523,24 @@
       const archiveRanked = rankedPlayers(item);
       const archiveTop = archiveRanked.length && archiveRounds.length ? archiveRanked[0] : null;
       return `
-        <button class="archive-card" type="button" data-action="view-archive" data-session-id="${escapeAttr(item.id)}">
-          <span class="archive-top">
-            <strong>${escapeHTML(item.name)}</strong>
-            ${icon('chevron', 16)}
-          </span>
-          <span class="archive-meta">
-            <span>${formatDateTime(item.createdAt)} 创建</span>
-            <span>${archiveRounds.length} 局</span>
-            <span>${item.players.length} 人</span>
-          </span>
-          <span class="archive-top-line">
-            <span>${archiveTop ? `领先：${escapeHTML(archiveTop.player.name)}` : '无对局记录'}</span>
-            ${archiveTop ? `<b>${formatSigned(archiveTop.total)}</b>` : ''}
-          </span>
-        </button>
+        <div class="archive-item">
+          <button class="archive-card" type="button" data-action="view-archive" data-session-id="${escapeAttr(item.id)}">
+            <span class="archive-top">
+              <strong>${escapeHTML(item.name)}</strong>
+              ${icon('chevron', 16)}
+            </span>
+            <span class="archive-meta">
+              <span>${formatDateTime(item.createdAt)} 创建</span>
+              <span>${archiveRounds.length} 局</span>
+              <span>${item.players.length} 人</span>
+            </span>
+            <span class="archive-top-line">
+              <span>${archiveTop ? `领先：${escapeHTML(archiveTop.player.name)}` : '无对局记录'}</span>
+              ${archiveTop ? `<b>${formatSigned(archiveTop.total)}</b>` : ''}
+            </span>
+          </button>
+          <button class="archive-delete-btn" type="button" data-action="delete-session" data-session-id="${escapeAttr(item.id)}" aria-label="删除场次 ${escapeAttr(item.name)}" title="删除场次">${icon('trash', 17)}</button>
+        </div>
       `;
     }).join('');
 
@@ -3767,6 +3805,45 @@
     showToast(saved ? `已删除 ${name}${suffix}` : storageFailureText(`已删除 ${name}，但本机存储失败`));
   }
 
+  function openDeleteSessionDialog(sessionId) {
+    const session = sessionById(sessionId);
+    if (!session) return;
+    if (!session.archived) {
+      showToast('进行中的场次不能删除，请先「新开一场」归档后再删除');
+      return;
+    }
+    const current = currentSession();
+    const rounds = session.rounds.length;
+    const body = rounds
+      ? `<strong>${escapeHTML(session.name)}</strong> 共 <strong>${rounds} 局</strong>、<strong>${session.players.length} 人</strong>。删除后整场记录无法恢复${current && current.id !== session.id ? `，进行中的「${escapeHTML(current.name)}」不受影响` : ''}。`
+      : `<strong>${escapeHTML(session.name)}</strong> 还没有对局记录，删除后无法恢复。`;
+    openConfirm({
+      title: `删除场次 ${session.name}？`,
+      subtitle: '整场记录会从本机移除。',
+      body,
+      confirmLabel: '删除场次',
+      confirmAction: 'confirm-delete-session',
+      confirmData: { 'session-id': session.id },
+      danger: true
+    });
+  }
+
+  function deleteSessionById(sessionId) {
+    const session = sessionById(sessionId);
+    if (!session) return;
+    if (!session.archived) {
+      closeDialog();
+      showToast('进行中的场次不能删除，请先「新开一场」归档后再删除');
+      return;
+    }
+    const name = session.name;
+    state.sessions = state.sessions.filter((item) => item.id !== sessionId);
+    const saved = saveState();
+    closeDialog();
+    render({ keepScroll: true });
+    showToast(saved ? `已删除场次 ${name}` : storageFailureText(`已删除场次 ${name}，但本机存储失败`));
+  }
+
   function openConfirm({ title, subtitle = '', body, confirmLabel, confirmAction, confirmData = {}, danger = false }) {
     const dataAttrs = Object.entries(confirmData)
       .map(([key, value]) => ` data-${escapeAttr(key)}="${escapeAttr(value)}"`)
@@ -3951,6 +4028,7 @@
       footer: `
         <button class="btn btn-secondary" type="button" data-action="copy-session" data-session-id="${escapeAttr(session.id)}">${icon('copy', 16)}复制</button>
         <button class="btn btn-secondary" type="button" data-action="export-session" data-session-id="${escapeAttr(session.id)}">${icon('download', 16)}CSV</button>
+        <button class="btn btn-danger" type="button" data-action="delete-session" data-session-id="${escapeAttr(session.id)}">${icon('trash', 16)}删除</button>
         <button class="btn btn-primary" type="button" data-action="close-dialog">关闭</button>
       `,
       tall: true
@@ -4396,6 +4474,16 @@
 
     if (action === 'confirm-delete-player') {
       deletePlayerById(trigger.dataset.playerId);
+      return;
+    }
+
+    if (action === 'delete-session') {
+      openDeleteSessionDialog(trigger.dataset.sessionId);
+      return;
+    }
+
+    if (action === 'confirm-delete-session') {
+      deleteSessionById(trigger.dataset.sessionId);
       return;
     }
 
